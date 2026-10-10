@@ -1,0 +1,5 @@
+,AUROC difference,95% CI low,95% CI high,statistically significant
+Attention hybrid (quantum)  vs  Attention + classical control,-0.009,-0.0141,-0.0038,True
+Attention hybrid (quantum)  vs  baseline,-0.011,-0.0239,0.0013,False
+Concat hybrid (quantum)  vs  baseline,-0.0059,-0.0179,0.006,False
+Attention hybrid (quantum)  vs  Classical head (pooled),-0.0086,-0.0148,-0.0025,True

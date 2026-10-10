@@ -1,0 +1,3 @@
+qubits,val mean AUROC,training time (s),"time per epoch on full train set (est., min)"
+8,0.621,8.311,0.355
+16,0.668,694.866,29.639

@@ -1,0 +1,13 @@
+torch
+torchvision
+pennylane
+grad-cam
+numpy
+pandas
+pillow
+streamlit==1.65.0
+plotly>=6
+requests
+fastapi
+uvicorn
+pytest

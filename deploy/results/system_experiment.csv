@@ -1,0 +1,8 @@
+,images,sent to cloud %,abnormal reaching cloud %,MB uploaded,cloud compute s,mean latency ms,p95 latency ms,fallbacks handled
+"fog+cloud | 40 ms, 10 Mbps",300.0,70.67,85.5,2.24,260.24,1040.38,1816.97,0.0
+"cloud-only | 40 ms, 10 Mbps",300.0,100.0,100.0,3.21,369.44,1448.33,1810.04,0.0
+"fog+cloud | good link 10 ms, 50 Mbps",60.0,78.33,100.0,0.49,57.73,1030.33,1645.82,0.0
+"cloud-only | good link 10 ms, 50 Mbps",60.0,100.0,100.0,0.64,73.37,1286.14,1661.15,0.0
+"fog+cloud | poor link 150 ms, 1 Mbps",60.0,78.33,100.0,0.49,56.01,2107.58,3110.16,0.0
+"cloud-only | poor link 150 ms, 1 Mbps",60.0,100.0,100.0,0.64,72.8,2699.96,3067.26,0.0
+fog+cloud | cloud outage,60.0,78.33,100.0,0.49,0.0,34.22,45.12,47.0

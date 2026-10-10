@@ -1,0 +1,8 @@
+,value
+images (rows),5606
+unique patients,4230
+images found on disk,5606
+abnormal (>= 1 finding),2562
+normal (No Finding),3044
+images with 2+ findings,980
+duplicate image names,0

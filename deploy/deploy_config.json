@@ -1,0 +1,64 @@
+{
+  "classes": [
+    "Atelectasis",
+    "Cardiomegaly",
+    "Effusion",
+    "Infiltration",
+    "Mass",
+    "Nodule",
+    "Pneumonia",
+    "Pneumothorax",
+    "Consolidation",
+    "Edema",
+    "Emphysema",
+    "Fibrosis",
+    "Pleural_Thickening",
+    "Hernia"
+  ],
+  "backbone": "densenet121",
+  "n_qubits": 8,
+  "n_layers": 3,
+  "n_heads": 3,
+  "feature_dim": 1024,
+  "threshold": 0.4,
+  "fog_test": {
+    "recall (abnormal sent to cloud)": 0.8377358490566038,
+    "specificity (normals kept at fog)": 0.3778501628664495,
+    "precision": 0.5375302663438256,
+    "sent to cloud %": 72.2027972027972
+  },
+  "speedup": 10.99074074074074,
+  "savings": {
+    "cloud calls avoided %": 29.33,
+    "upload saved %": 30.218068535825537,
+    "cloud compute saved %": 29.558250324815937
+  },
+  "xai_summary": {
+    "images analysed": 100.0,
+    "anatomically plausible %": 2.0,
+    "possible shortcut %": 2.0,
+    "diffuse / uncertain %": 96.0,
+    "mean heat on border %": 17.351,
+    "prob. drop, highlighted pixels removed": 0.166,
+    "prob. drop, random pixels removed": -0.078
+  },
+  "reliable_classes": [
+    "Atelectasis",
+    "Cardiomegaly",
+    "Effusion",
+    "Infiltration",
+    "Mass",
+    "Nodule",
+    "Pneumothorax",
+    "Consolidation",
+    "Edema",
+    "Emphysema",
+    "Fibrosis",
+    "Pleural_Thickening"
+  ],
+  "dataset": {
+    "images": 5606,
+    "patients": 4230,
+    "classes": 14
+  }
+}

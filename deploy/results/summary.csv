@@ -1,0 +1,15 @@
+Result,Value
+Dataset,"NIH ChestX-ray14 sample: 5606 images, 4230 patients, patient-level 70/10/20 split"
+"Cloud backbone mean AUROC (reliable classes, test)",0.735
+"Attention hybrid (8-qubit VQC), mean ± std over seeds",0.721 ± 0.006
+"Attention + classical control, mean ± std",0.730 ± 0.001
+Quantum vs classical control (bootstrap 95% CI),"-0.009 [-0.014, -0.004] — significant"
+"Best model (seed ensemble), mean AUROC",0.735 (densenet121 baseline)
+Why 8 qubits,"16 qubits: 126x slower step, output spread 0.026 vs 0.055"
+Fog triage (test) recall / specificity,83.8% / 37.8% at threshold 0.4
+Fog CPU speed-up vs cloud backbone,11.0x
+Live system: cloud calls / upload / cloud compute saved,29.3% / 30.2% / 29.6%
+Projected cloud calls avoided at 20% abnormal prevalence,33.5%
+Cloud outage,47 of 60 flagged cases handled by fog fallback
+XAI: explanations anatomically plausible,2% of analysed test cases
+XAI: faithfulness (prob. drop highlighted vs random),0.166 vs -0.078
