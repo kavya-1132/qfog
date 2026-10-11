@@ -131,7 +131,8 @@ class FogNode:
             rec['audited'] = audited
         else:
             rec['p_abnormal'], send = None, True
-            rec['audited'], rule_sent = False, True
+            audited, rule_sent = False, True
+            rec['audited'] = False
         rec['sent_to_cloud'] = send
         rec['image'] = denormalize(to_input(gray))
         if not send:
