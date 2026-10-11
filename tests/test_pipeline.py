@@ -50,3 +50,15 @@ def test_cloud_outage_falls_back(system):
     _, fog = system
     r = fog.process(xray(), mode='cloud-only', cloud_down=True)
     assert 'FALLBACK' in r['decision'] and 'cloud' not in r
+
+
+def test_adaptive_mode_runs_and_reports_state(system):
+    from src.adaptive import AdaptiveTriage
+    cfg, fog = system
+    fog.adaptive = AdaptiveTriage(cfg['threshold'], audit_rate=1.0, warmup=1, every=1, seed=0)
+    try:
+        r = fog.process(xray(), mode='fog+cloud', latency_ms=1, mbps=100, reference_abnormal=True)
+        assert 'adaptive_state' in r and r['adaptive_state']['images seen'] == 1
+        assert r['sent_to_cloud']                                        # audit rate 1.0: every image reaches the cloud
+    finally:
+        fog.adaptive = None

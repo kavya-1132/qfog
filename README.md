@@ -39,9 +39,14 @@ part of the architecture, not a source of better accuracy.
 | Fog CPU speed-up vs cloud backbone | 11.0× |
 | Cloud calls / upload / cloud compute saved (live run) | 29.3% / 30.2% / 29.6% |
 | Projected cloud calls avoided at 20% abnormal prevalence | 33.5% |
-| Cloud outage: flagged cases handled by fog fallback | 47 of 60 |
+| Cloud outage: images flagged by the fog node and queued for review (of 60 sent) | 47 (all flagged images queued) |
 
 **XAI:** only 2% of analysed explanations were anatomically plausible; highlighted-pixel removal dropped the probability by 0.166 versus −0.078 for random pixels.
+
+## Adaptive safety mode (ADAT), optional
+
+The fog threshold is normally fixed (chosen once on validation data). ADAT makes it self-correcting: a small random share of the images the fog node would keep is also sent to the cloud as an **audit**. An audited abnormal image counts `1 / audit_rate`, which gives an unbiased estimate of how many abnormal images the fog node is missing; if the estimated recall falls below the target the threshold is lowered, if it is comfortably above the target the threshold is raised. Code: `src/adaptive.py`; switch it on in the app under *Live X-ray Diagnosis → Adaptive safety mode*; it is **off by default**. The stream experiment on the whole test set is in `notebooks/extra_cells/adat_cell.py` (run it in the notebook after the triage cells) — **its results are not in the table above until it has been run on the real data.**
+Assumptions: audited images get a correct label (cloud verdict or radiologist), the estimate is noisy with few audits, and "recall" means abnormal images that reach the cloud.
 
 ## Limitations (read these)
 
@@ -61,6 +66,7 @@ part of the architecture, not a source of better accuracy.
 │   ├── figures/      EDA, ROC, qubit study, fog triage, system, XAI plots
 │   └── examples/     sample chest X-rays for the demo
 ├── notebooks/        QFog_Complete_v2.ipynb  (full Colab pipeline, includes extra evaluation cells)
+│   └── extra_cells/  safety_cell.py, adat_cell.py  (paste into the notebook after the triage cells)
 ├── docs/             QFog_GUIDE.md, QFog_v2_CHANGES.md
 ├── tests/
 ├── requirements.txt

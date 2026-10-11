@@ -101,8 +101,9 @@ class FogNode:
 
     def __init__(self, triage_model, threshold, cloud_service=None, cloud_url='http://127.0.0.1:8001'):
         self.triage, self.threshold, self.cloud, self.url = triage_model, threshold, cloud_service, cloud_url
+        self.adaptive = None   # optional src.adaptive.AdaptiveTriage (audit-driven adaptive threshold); None = fixed threshold
 
-    def process(self, image, mode='fog+cloud', latency_ms=40, mbps=10, cloud_down=False, transport='in-process'):
+    def process(self, image, mode='fog+cloud', latency_ms=40, mbps=10, cloud_down=False, transport='in-process', reference_abnormal=None):
         rec, t = {'mode': mode, 'transport': transport}, {}
         raw = image if isinstance(image, (bytes, bytearray)) else None
         if raw is None:
@@ -118,9 +119,19 @@ class FogNode:
             with torch.no_grad():
                 p = torch.sigmoid(self.triage(to_input(gray)[None])).item()
             t['fog triage (MobileNetV3, CPU)'] = (time.perf_counter() - t0) * 1000
-            rec['p_abnormal'], send = p, p > self.threshold
+            rec['p_abnormal'] = p
+            if self.adaptive is not None:
+                send, audited = self.adaptive.decide(p)
+                rule_sent = send and not audited
+                rec['threshold_used'] = self.adaptive.threshold
+            else:
+                send, audited = p > self.threshold, False
+                rule_sent = send
+                rec['threshold_used'] = self.threshold
+            rec['audited'] = audited
         else:
             rec['p_abnormal'], send = None, True
+            rec['audited'], rule_sent = False, True
         rec['sent_to_cloud'] = send
         rec['image'] = denormalize(to_input(gray))
         if not send:
@@ -151,6 +162,13 @@ class FogNode:
                 pa = rec['p_abnormal']
                 rec.update(decision=f'FALLBACK — {e}. Fog triage p(abnormal) = {pa if pa is not None else float("nan"):.2f}; '
                                     'case queued and flagged for radiologist review.', error=str(e))
+        if audited and 'cloud' in rec:
+            rec['decision'] = ('AUDIT — the fog rule would have kept this image (low risk); it was sent to the cloud as a random '
+                               'quality audit. Reference: ' + rec['decision'])
+        if self.adaptive is not None and mode == 'fog+cloud':
+            reached = 'cloud' in rec
+            self.adaptive.update(rule_sent, audited, reference_abnormal if (reached and reference_abnormal is not None) else None)
+            rec['adaptive_state'] = self.adaptive.state()
         t['total'] = (time.perf_counter() - t_all) * 1000
         rec['timings_ms'] = t
         return rec

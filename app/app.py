@@ -216,6 +216,15 @@ elif page == 'Live X-ray Diagnosis':
         latency = st.slider('Network latency (ms)', 5, 300, 40, 5)
         bandwidth = st.slider('Bandwidth (Mbps)', 0.5, 100.0, 10.0)
         outage = st.checkbox('Simulate cloud outage')
+        st.markdown('---\n**Adaptive safety mode (ADAT)**')
+        adaptive_on = st.checkbox('Audit-driven adaptive threshold', help='A random share of the images the fog node would keep is also sent '
+                                  'to the cloud as an audit. From the audits the system estimates its own recall and moves the fog threshold '
+                                  'up or down to hold the target. Off = the fixed threshold chosen on validation.')
+        if adaptive_on:
+            adat_target = st.slider('Target recall', 0.80, 0.99, 0.90, 0.01)
+            adat_rate = st.slider('Audit rate (% of kept images)', 5, 50, 20, 5) / 100
+            if st.button('Reset adaptive state'):
+                st.session_state.pop('adat', None)
     transport = 'http' if transport.startswith('HTTP') else 'in-process'
     if transport == 'http':
         try:
@@ -233,9 +242,23 @@ elif page == 'Live X-ray Diagnosis':
     up = st.file_uploader('Upload a frontal chest X-ray (PNG / JPG)', type=['png', 'jpg', 'jpeg'])
     img = Image.open(up) if up is not None else (Image.open(labels[choice]) if labels[choice] else None)
 
+    ref = None
+    if up is None and labels[choice] is not None:                     # example images carry their dataset label: used as the audit reference
+        ref = labels[choice].name.startswith('abnormal')
+    if adaptive_on:
+        from src.adaptive import AdaptiveTriage
+        key = (adat_target, adat_rate)
+        if st.session_state.get('adat_key') != key or 'adat' not in st.session_state:
+            st.session_state['adat'] = AdaptiveTriage(cfg['threshold'], adat_target, adat_rate, warmup=10, every=5, window=60, step=0.03)
+            st.session_state['adat_key'] = key
+        fog.adaptive = st.session_state['adat']
+    else:
+        fog.adaptive = None
+
     if img is not None and st.button('Run diagnosis', type='primary'):
         with st.spinner('Fog node → network → cloud tier → explanation...'):
-            rec = fog.process(img, mode=mode, latency_ms=latency, mbps=bandwidth, cloud_down=outage, transport=transport)
+            rec = fog.process(img, mode=mode, latency_ms=latency, mbps=bandwidth, cloud_down=outage, transport=transport,
+                              reference_abnormal=ref)
         sent, ok = rec['sent_to_cloud'], 'cloud' in rec
         steps = [('X-ray received', 'done'), ('Fog triage', 'done' if mode == 'fog+cloud' else 'skip'),
                  ('Network', 'done' if ok else ('fail' if sent else 'skip')), ('Quantum-classical diagnosis', 'done' if ok else 'skip'),
@@ -244,7 +267,7 @@ elif page == 'Live X-ray Diagnosis':
                     unsafe_allow_html=True)
         css = 'decision-normal' if not sent else ('decision-abnormal' if ok else 'decision-fallback')
         pa = rec['p_abnormal']
-        st.markdown(f'<div class="{css}"><b>Fog node:</b> ' + (f'p(abnormal) = {pa:.2f} (threshold {cfg["threshold"]}) · ' if pa is not None else 'cloud-only mode · ')
+        st.markdown(f'<div class="{css}"><b>Fog node:</b> ' + (f'p(abnormal) = {pa:.2f} (threshold {rec.get("threshold_used", cfg["threshold"]):.2f}) · ' if pa is not None else 'cloud-only mode · ')
                     + f'<b>{rec["decision"]}</b></div>', unsafe_allow_html=True)
         st.write('')
         c1, c2, c3 = st.columns(3)
@@ -270,6 +293,18 @@ elif page == 'Live X-ray Diagnosis':
         tm = pd.DataFrame(list(rec['timings_ms'].items()), columns=['stage', 'ms']).round(1)
         st.dataframe(tm, width='stretch', hide_index=True)
         st.caption(f"Data sent to cloud: {rec.get('uplink_bytes', 0) / 1000:.1f} KB (original image {rec['device_to_fog_bytes'] / 1000:.0f} KB)")
+        if adaptive_on and 'adaptive_state' in rec:
+            a = rec['adaptive_state']
+            st.markdown('#### Adaptive safety mode')
+            est = a['estimated recall']
+            cards([('Current threshold', f"{a['threshold']:.2f}"), ('Started at', f"{a['start threshold']:.2f}"),
+                   ('Estimated recall (from audits)', 'not enough audits yet' if est is None else f'{est:.0%}'),
+                   ('Audits so far', f"{a['audits']} of {a['images seen']} images")])
+            if len(st.session_state['adat'].history) > 1:
+                hist = pd.DataFrame({'image number': range(len(st.session_state['adat'].history)), 'threshold': st.session_state['adat'].history})
+                st.plotly_chart(px.line(hist, x='image number', y='threshold', title='Fog threshold over this session'), width='stretch')
+            st.caption('The estimate uses the dataset label of the example images as the audit reference (it stands in for a radiologist). '
+                       'With only a few images it is very noisy; the notebook cell runs the algorithm on the whole test set.')
         st.markdown(DISCLAIMER, unsafe_allow_html=True)
     elif img is not None:
         st.image(img, caption='Selected X-ray', width=320)
