@@ -18,3 +18,10 @@ body { font-family: Arial, sans-serif; }
 .decision-normal { padding: .8rem 1rem; border-radius: 10px; background: #e8f6ee; border: 1px solid #8fd0a8; }
 .decision-abnormal { padding: .8rem 1rem; border-radius: 10px; background: #fff4e5; border: 1px solid #f0c27b; }
 .decision-fallback { padding: .8rem 1rem; border-radius: 10px; background: #fdecec; border: 1px solid #e7a2a2; }
+
+/* Dark-theme fix: these boxes have light backgrounds, so the text must be dark (otherwise it is white-on-white) */
+.card, .card *, .disclaimer, .disclaimer *, .step, .decision-normal, .decision-normal *, .decision-abnormal, .decision-abnormal *,
+.decision-fallback, .decision-fallback *, .hero, .hero h1 { color: #1f2d4d !important; }
+.hero p { color: #46557a !important; }
+.card b { color: #5a6785 !important; }
+.step.skip { color: #8a8a8a !important; }
